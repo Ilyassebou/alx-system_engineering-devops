@@ -6,34 +6,24 @@ import sys
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 2:
-        print("Usage: ./script.py <employee_id>")
-        sys.exit(1)
-
     userId = sys.argv[1]
-    try:
-        userId = int(userId)
-    except ValueError:
-        print("Employee ID must be an integer.")
-        sys.exit(1)
+    user = requests.get("https://jsonplaceholder.typicode.com/users/{}"
+                        .format(userId))
 
-    user_response = requests.get(f"https://jsonplaceholder.typicode.com/users/{userId}")
-    user = user_response.json()
+    name = user.json().get('name')
 
-    if 'name' not in user:
-        print("User ID not found")
-        sys.exit(1)
+    todos = requests.get('https://jsonplaceholder.typicode.com/todos')
+    totalTasks = 0
+    completed = 0
 
-    name = user.get('name')
+    for task in todos.json():
+        if task.get('userId') == int(userId):
+            totalTasks += 1
+            if task.get('completed'):
+                completed += 1
 
-    todos_response = requests.get(f"https://jsonplaceholder.typicode.com/todos?userId={userId}")
-    todos = todos_response.json()
+    print('Employee {} is done with tasks({}/{}):'
+          .format(name, completed, totalTasks))
 
-    totalTasks = len(todos)
-    completed_tasks = [task for task in todos if task.get('completed')]
-    completed = len(completed_tasks)
-
-    print(f"Employee {name} is done with tasks({completed}/{totalTasks}):")
-    
-    for i, task in enumerate(todos, start=1):
-        print(f"Task {i} Formatting: OK")
+    print('\n'.join(["\t " + task.get('title') for task in todos.json()
+          if task.get('userId') == int(userId) and task.get('completed')]))
